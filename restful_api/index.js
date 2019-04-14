@@ -9,7 +9,7 @@ var StringDecoder = require('string_decoder').StringDecoder;
 
 // The server should respond to all request with a string
 var server = http.createServer(function(req, res) {
-	
+
 	// Get the URL and parse it
 	var parsedURL = url.parse(req.url,true);
 
