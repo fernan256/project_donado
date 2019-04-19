@@ -3,32 +3,34 @@
 */
 
 // Dependencies
-var http = require('http');
-var url = require('url');
-var StringDecoder = require('string_decoder').StringDecoder;
+const http = require('http');
+const url = require('url');
+const StringDecoder = require('string_decoder').StringDecoder;
+
+let config = require('../config');
 
 // The server should respond to all request with a string
-var server = http.createServer(function(req, res) {
+let server = http.createServer(function(req, res) {
 
 	// Get the URL and parse it
-	var parsedURL = url.parse(req.url,true);
+	let parsedURL = url.parse(req.url,true);
 
 	// Ger the path
-	var path = parsedURL.pathname;
-	var trimmedPath = path.replace(/^\/+|\/+$/g,'');
+	let path = parsedURL.pathname;
+	let trimmedPath = path.replace(/^\/+|\/+$/g,'');
 
 	// Get the query string as a object
-	var queryStringObject = parsedURL.query;
+	let queryStringObject = parsedURL.query;
 
 	// Get the http method
-	var method = req.method.toLowerCase();
+	let method = req.method.toLowerCase();
 
 	// Get the headers as an object
-	var headers = req.headers;
+	let headers = req.headers;
 
 	// Get the payload, if any
-	var decoder = new StringDecoder('utf-8');
-	var buffer = '';
+	let decoder = new StringDecoder('utf-8');
+	let buffer = '';
 	req.on('data',function(data) {
 		buffer += decoder.write(data);
 	});
@@ -37,10 +39,10 @@ var server = http.createServer(function(req, res) {
 
     // Choose the handler this request should go to. If one is no found then go to the not found
 
-    var chooseHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+    let chooseHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
 
     // Construct the data object to send to the handler
-    var data = {
+    let data = {
       'trimmedPath': trimmedPath,
       'queryStringObject': queryStringObject,
       'method': method,
@@ -60,6 +62,7 @@ var server = http.createServer(function(req, res) {
       var payloadString = JSON.stringify(payload);
 
       // Return the response
+      res.setHeader('Content-Type', 'application/json');
       res.writeHead(statusCode);
 
       // Send the response
@@ -72,13 +75,13 @@ var server = http.createServer(function(req, res) {
 	});
 });
 
-// Start the server and have it listen on port 3000
-server.listen(3000, function() {
-	console.log("The server is listen on port 3000");
+// Start the server
+server.listen(config.port, function() {
+	console.log("The server is listen on port " + config.port + " in " + config.envName + " mode");
 });
 
 // Define the headers
-var handlers = {};
+let handlers = {};
 
 // Sample handler
 handlers.sample =  function(data,callback) {
@@ -94,6 +97,6 @@ handlers.notFound = function(data,callback) {
 };
 
 // Define a request router
-var router = {
+let router = {
   'sample': handlers.sample
 };
