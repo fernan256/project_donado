@@ -4,38 +4,65 @@
 
 // Dependencies
 const http = require('http');
+const https = require('https');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
 
 let config = require('../config');
+let fs = require('fs');
 
-// The server should respond to all request with a string
-let server = http.createServer(function(req, res) {
+// Instantiate the HTTP server
+let httpServer = http.createServer((req, res) => {
+  unifiedServer(req, res);
+});
+// Start HTTP server
+httpServer.listen(config.httpPort, () => {
+  console.log("The server is listen on port " + config.httpPort + " in " + config.envName + " mode");
+});
 
-	// Get the URL and parse it
-	let parsedURL = url.parse(req.url,true);
+// Instantiate the HTTPS server
+let httpsServerOptions = {
+  'key' : fs.readFileSync('./https/key.pem'),
+  'cert' : fs.readFileSync('./https/cert.pem')
+};
+let httpsServer = https.createServer(httpsServerOptions,(req, res) => {
+  unifiedServer(req, res);
+});
 
-	// Ger the path
-	let path = parsedURL.pathname;
-	let trimmedPath = path.replace(/^\/+|\/+$/g,'');
+// Start HTTPS server
+httpsServer.listen(config.httpsPort, () => {
+  console.log("The server is listen on port " + config.httpsPort + " in " + config.envName + " mode");
+});
 
-	// Get the query string as a object
-	let queryStringObject = parsedURL.query;
 
-	// Get the http method
-	let method = req.method.toLowerCase();
 
-	// Get the headers as an object
-	let headers = req.headers;
+// Logic for http and https servers
+let unifiedServer = (req, res) => {
 
-	// Get the payload, if any
-	let decoder = new StringDecoder('utf-8');
-	let buffer = '';
-	req.on('data',function(data) {
-		buffer += decoder.write(data);
-	});
-	req.on('end',function() {
-		buffer += decoder.end();
+  // Get the URL and parse it
+  let parsedURL = url.parse(req.url,true);
+
+  // Ger the path
+  let path = parsedURL.pathname;
+  let trimmedPath = path.replace(/^\/+|\/+$/g,'');
+
+  // Get the query string as a object
+  let queryStringObject = parsedURL.query;
+
+  // Get the http method
+  let method = req.method.toLowerCase();
+
+  // Get the headers as an object
+  let headers = req.headers;
+
+  // Get the payload, if any
+  let decoder = new StringDecoder('utf-8');
+  let buffer = '';
+  req.on('data',(data) => {
+    buffer += decoder.write(data);
+  });
+  req.on('end',() => {
+    buffer += decoder.end();
 
     // Choose the handler this request should go to. If one is no found then go to the not found
 
@@ -51,7 +78,7 @@ let server = http.createServer(function(req, res) {
     };
 
     // Route the request to the handler specified in the router
-    chooseHandler(data,function(statusCode, payload) {
+    chooseHandler(data,(statusCode, payload) => {
       // Use the status code called back by the handler, or default to 200
       statusCode = typeof(statusCode) == 'number' ? statudCode: 200;
 
@@ -72,19 +99,15 @@ let server = http.createServer(function(req, res) {
       console.log('This response: ', statusCode, payloadString);
 
     });
-	});
-});
+  });
 
-// Start the server
-server.listen(config.port, function() {
-	console.log("The server is listen on port " + config.port + " in " + config.envName + " mode");
-});
+}
 
 // Define the headers
 let handlers = {};
 
 // Sample handler
-handlers.sample =  function(data,callback) {
+handlers.sample = (data,callback) => {
 
   // Callback a http status code, and a payload object
   callback(406,{'name' : 'sample handler'});
@@ -92,7 +115,7 @@ handlers.sample =  function(data,callback) {
 };
 
 // Not found handler
-handlers.notFound = function(data,callback) {
+handlers.notFound = (data,callback) => {
   callback(404);
 };
 
