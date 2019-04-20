@@ -1,1 +1,6 @@
 server/https/*
+!server/https/.gitkeep
+
+server/.data/*
+!server/.data/.gitkeep
+

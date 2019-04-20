@@ -11,7 +11,7 @@ const path = require('path');
 let lib = {};
 
 // Base directory of the data folder
-lib.baseDir = path.join(__dirname,'/.././data/');
+lib.baseDir = path.join(__dirname,'/.././.data/');
 
 // Write data to a file
 lib.create = (dir,file,data,callback) => {
@@ -44,7 +44,12 @@ lib.create = (dir,file,data,callback) => {
 // Read data from a file
 lib.read = (dir,file,callback) => {
   fs.readFile(lib.baseDir+dir+'/'+file+'.json','utf8',(err,data) => {
-    callback(err,data);
+    if(!err && data) {
+      let parseDate = helpers.parseJsonToObject(data);
+      callback(false,parseDate);
+    } else {
+      callback(err,data);
+    }
   })
 };
 
