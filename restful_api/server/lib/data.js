@@ -6,6 +6,7 @@
 // Dependencies
 const fs = require('fs');
 const path = require('path');
+const helpers = require('./helpers');
 
 // Container for the module (to be exported)
 let lib = {};

@@ -79,7 +79,23 @@ handlers._users.post = (data, callback) => {
 // Optional data: none
 // @TODO Only let an authenticated user acces their object.
 handlers._users.get = (data, callback) => {
+  // Check that the phone number is valid
+  let phone = typeof(data.queryStringObject.phone) == 'string' && data.queryStringObject.phone.trim().length == 10 ? data.queryStringObject.phone.trim() : false;
 
+  if(phone) {
+    // Lookup the user
+    _data.read('users',phone, (err,data) => {
+      if(!err && data) {
+        // Remove password before return callback
+        delete data.hashedPassword;
+        callback(200,data);
+      } else {
+        callback(404);
+      }
+    })
+  } else {
+    callback(400, {'Error' : 'Missing required field'});
+  }
 }
 
 // Users - put
